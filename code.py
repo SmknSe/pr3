@@ -51,14 +51,19 @@ HUNDREDS = {
 
 # Словарь для разрядов (тысячи, миллионы)
 ORDERS = {
-    'тысяча': '1000', 'тысячи': '1000', 'тысяч': '1000',
-    'миллион': '1000000', 'миллиона': '1000000', 'миллионов': '1000000'
+    'тысяча': 1000, 'тысячи': 1000, 'тысяч': 1000,
+    'миллион': 1000000, 'миллиона': 1000000, 'миллионов': 1000000
 }
 
-def convert_simple_number(words):
-    """Преобразование простого числа (до 999)"""
+def is_number_word(word):
+    """Проверка, является ли слово числительным"""
+    return (word in NUMBERS_1_19 or word in TENS or 
+            word in HUNDREDS or word in ORDERS)
+
+def convert_number_group(words):
+    """Преобразование группы слов в число"""
     if not words:
-        return ""
+        return 0
     
     total = 0
     for word in words:
@@ -69,7 +74,42 @@ def convert_simple_number(words):
         elif word in NUMBERS_1_19:
             total += int(NUMBERS_1_19[word])
     
-    return str(total) if total > 0 else ""
+    return total
+
+def process_text(text):
+    """Основная функция обработки текста"""
+    words = text.split()
+    result = []
+    i = 0
+    
+    while i < len(words):
+        if is_number_word(words[i]):
+            # Начало числовой группы
+            number_group = []
+            current_order = 1
+            total = 0
+            
+            # Собираем все слова числа
+            while i < len(words) and is_number_word(words[i]):
+                if words[i] in ORDERS:
+                    # Встретили разряд (тысячи, миллионы)
+                    group_value = convert_number_group(number_group)
+                    total += group_value * ORDERS[words[i]]
+                    number_group = []
+                else:
+                    number_group.append(words[i])
+                i += 1
+            
+            # Обрабатываем остаток числа
+            if number_group:
+                total += convert_number_group(number_group)
+            
+            result.append(str(total))
+        else:
+            result.append(words[i])
+            i += 1
+    
+    return ' '.join(result)
 
 def read_file(filename):
     """Чтение текста из файла"""
@@ -80,23 +120,35 @@ def read_file(filename):
         print(f"Файл {filename} не найден")
         return None
 
+def write_file(filename, text):
+    """Запись текста в файл"""
+    with open(filename, 'w', encoding='utf-8') as file:
+        file.write(text)
+
 def main():
-    filename = "input.txt"
-    text = read_file(filename)
+    input_filename = "input.txt"
+    output_filename = "output.txt"
+    
+    text = read_file(input_filename)
     
     if text:
         print("Исходный текст:")
         print(text)
         
-        # Тест преобразования
-        test_words = ["сто", "одиннадцать"]
-        result = convert_simple_number(test_words)
-        print(f"\nТест преобразования 'сто одиннадцать': {result}")
+        # Обрабатываем текст
+        processed_text = process_text(text)
+        
+        print("\nОбработанный текст:")
+        print(processed_text)
+        
+        # Сохраняем результат
+        write_file(output_filename, processed_text)
+        print(f"\nРезультат сохранен в файл {output_filename}")
     else:
+        # Создаем тестовый файл
         test_text = "сто одиннадцать тысяч фиолетовых оленей"
-        with open(filename, 'w', encoding='utf-8') as file:
-            file.write(test_text)
-        print(f"Создан тестовый файл {filename}")
+        write_file(input_filename, test_text)
+        print(f"Создан тестовый файл {input_filename}")
 
 if __name__ == "__main__":
     main()
