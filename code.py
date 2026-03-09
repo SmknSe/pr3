@@ -55,6 +55,22 @@ ORDERS = {
     'миллион': '1000000', 'миллиона': '1000000', 'миллионов': '1000000'
 }
 
+def convert_simple_number(words):
+    """Преобразование простого числа (до 999)"""
+    if not words:
+        return ""
+    
+    total = 0
+    for word in words:
+        if word in HUNDREDS:
+            total += int(HUNDREDS[word])
+        elif word in TENS:
+            total += int(TENS[word])
+        elif word in NUMBERS_1_19:
+            total += int(NUMBERS_1_19[word])
+    
+    return str(total) if total > 0 else ""
+
 def read_file(filename):
     """Чтение текста из файла"""
     try:
@@ -71,7 +87,11 @@ def main():
     if text:
         print("Исходный текст:")
         print(text)
-        print("\nВсе словари загружены")
+        
+        # Тест преобразования
+        test_words = ["сто", "одиннадцать"]
+        result = convert_simple_number(test_words)
+        print(f"\nТест преобразования 'сто одиннадцать': {result}")
     else:
         test_text = "сто одиннадцать тысяч фиолетовых оленей"
         with open(filename, 'w', encoding='utf-8') as file:
